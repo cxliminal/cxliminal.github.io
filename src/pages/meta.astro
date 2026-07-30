@@ -1,0 +1,116 @@
+---
+import Base from '../layouts/Base.astro';
+
+const decisions = [
+  { q: '站点形态', a: '互动实验室', note: '四篇章结构，每章 = 认知 + 可玩 demo + 工程笔记。数字花园与终端风落选。' },
+  { q: '技术栈', a: 'Astro 5 + 交互岛屿', note: '静态优先、GitHub Pages 原生契合；React 只出现在需要交互的岛屿上。Next.js 静态导出浪费 RSC，VitePress 天花板太低。' },
+  { q: '旧内容', a: '全部移除', note: '191 篇笔记随旧站下线，完整封存在 git 历史中，随时可恢复——删的是位置，不是记录。' },
+  { q: '真模型 demo', a: 'WebLLM 直接上', note: '首页即「本页运行着一个 LLM」。宁可要加载门槛，不要预录的假货。' },
+];
+
+const stack = [
+  ['Astro 5', '静态站点 + 岛屿架构 + View Transitions'],
+  ['React 19', '四个交互岛屿的实现'],
+  ['Tailwind CSS 4', 'vite 插件模式，零配置文件'],
+  ['@mlc-ai/web-llm', '浏览器内 WebGPU 推理'],
+  ['GitHub Pages + Actions', 'push 即部署'],
+];
+---
+
+<Base title="构建日志 · Agentic Lab" current="meta">
+  <section class="max-w-3xl mx-auto px-5 pt-16 pb-10">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="font-monox text-[11px] px-2 py-1 rounded border border-[var(--color-line)] text-[var(--color-acc2)]">META</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--color-ink)]">这个网站是怎么被造出来的</h1>
+    <p class="mt-4 text-[16px] leading-relaxed text-[var(--color-mute)]">
+      本站即展品：从决策到代码，全程由细林与 AI agent 搭档协作完成。
+      这一页是过程的全量公开——在 vibecoding 时代，<strong class="text-[var(--color-ink)]">过程比结果更能说明问题</strong>。
+    </p>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-5 pb-12">
+    <h2 class="text-lg font-semibold text-[var(--color-ink)] mb-4">四个关键决策</h2>
+    <div class="space-y-3">
+      {
+        decisions.map((d) => (
+          <div class="panel p-5">
+            <div class="flex flex-wrap items-baseline gap-x-3 mb-1.5">
+              <span class="text-[12px] font-monox text-[var(--color-faint)]">{d.q}</span>
+              <span class="text-[14.5px] font-medium text-[var(--color-ink)]">{d.a}</span>
+            </div>
+            <p class="text-[13px] leading-relaxed text-[var(--color-mute)]">{d.note}</p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-5 pb-12">
+    <h2 class="text-lg font-semibold text-[var(--color-ink)] mb-4">技术栈</h2>
+    <div class="panel divide-y divide-[var(--color-line)]">
+      {
+        stack.map(([name, desc]) => (
+          <div class="flex items-baseline gap-4 px-5 py-3.5">
+            <span class="font-monox text-[13px] text-[var(--color-acc)] shrink-0 w-44">{name}</span>
+            <span class="text-[13px] text-[var(--color-mute)]">{desc}</span>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-5 pb-12">
+    <h2 class="text-lg font-semibold text-[var(--color-ink)] mb-4">时间线</h2>
+    <div class="panel p-5">
+      <ol class="relative border-l border-[var(--color-line-strong)] ml-2 space-y-5">
+        <li class="pl-5 relative">
+          <span class="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-[var(--color-faint)]"></span>
+          <div class="font-monox text-[11px] text-[var(--color-faint)] mb-0.5">2024 — 2025</div>
+          <p class="text-[13px] text-[var(--color-mute)] leading-relaxed">旧站「智学笔记」时代：VitePress + 191 篇 Markdown，记录 Python / 机器学习 / 统计学。</p>
+        </li>
+        <li class="pl-5 relative">
+          <span class="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-[var(--color-acc)]"></span>
+          <div class="font-monox text-[11px] text-[var(--color-faint)] mb-0.5">2026-07-30</div>
+          <p class="text-[13px] text-[var(--color-mute)] leading-relaxed">
+            一次对话定方向：博客形态已死，改做互动实验室。四个决策当场拍板（见上），当天完成旧站下线与 Astro 新站搭建。
+          </p>
+        </li>
+        <li class="pl-5 relative">
+          <span class="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-[var(--color-acc2)] bg-transparent"></span>
+          <div class="font-monox text-[11px] text-[var(--color-faint)] mb-0.5">进行中</div>
+          <p class="text-[13px] text-[var(--color-mute)] leading-relaxed">
+            篇章持续迭代：更深的 WebLLM 玩法、接真模型的 loop、可编辑的 graph。这个日志会跟着 commit 一起生长。
+          </p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-5 pb-8">
+    <div class="panel p-6">
+      <h2 class="text-[15px] font-semibold text-[var(--color-ink)] mb-2.5">第二轮迭代（同日）</h2>
+      <ul class="text-[13.5px] leading-relaxed text-[var(--color-mute)] space-y-2">
+        <li><strong class="text-[var(--color-ink)]">mock 升级为真模型</strong>：Tool-use 沙盒与 Loop 模拟器接入 Claude（@anthropic-ai/sdk，浏览器 BYOK），真实 tool_use 循环、真实 token 计量；无 key 时保留教学 mock。</li>
+        <li><strong class="text-[var(--color-ink)]">新增 /notes 深度文章</strong>：基于 Anthropic 工程博客等一手资料调研写成四篇——上下文工程、agentic loop、多智能体、有效智能体。</li>
+        <li><strong class="text-[var(--color-ink)]">AI 互审</strong>：由一个独立 subagent 对整站前端做 P0-P2 分级评审（12 条），再由构建 agent 逐条修复——包括反向边重叠、引擎状态丢失、闭包读到时数据等真 bug。审核与修复都由 agent 完成，这就是本站主张的开发方式。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-5 pb-16">
+    <div class="panel p-6">
+      <h2 class="text-[15px] font-semibold text-[var(--color-ink)] mb-2.5">旧站去哪了</h2>
+      <p class="text-[13.5px] leading-relaxed text-[var(--color-mute)]">
+        没有删除，只是退场。191 篇笔记完整封存在这个仓库的 git 历史里：
+        <a
+          href="https://github.com/chenxilin1994/chenxilin1994.github.io/commits/master"
+          target="_blank"
+          rel="noreferrer"
+          class="text-[var(--color-acc)]"
+        >github.com/chenxilin1994/chenxilin1994.github.io → commits</a>。
+        想考古的话，检出任何一个 2026-07-30 之前的 commit 即可。
+      </p>
+    </div>
+  </section>
+</Base>

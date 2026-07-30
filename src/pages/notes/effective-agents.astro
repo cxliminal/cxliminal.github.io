@@ -1,0 +1,72 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="构建有效智能体 · Agentic Lab" current="notes">
+  <article class="max-w-3xl mx-auto px-5 pt-16 pb-16">
+    <a href="/notes/" class="font-monox text-[12px] text-[var(--color-faint)] no-underline hover:text-[var(--color-acc)]">← 深度文章</a>
+    <div class="flex items-center gap-3 mt-5 mb-4">
+      <span class="font-monox text-[10.5px] px-2 py-0.5 rounded border border-[var(--color-line)] text-[var(--color-acc2)]">MODEL+</span>
+      <span class="font-monox text-[11px] text-[var(--color-faint)]">2026-07-30 · 10 min</span>
+    </div>
+    <h1 class="text-3xl font-semibold tracking-tight text-[var(--color-ink)] leading-tight">构建有效智能体：五种工作流模式与 2026 四层架构</h1>
+    <p class="mt-4 text-[15px] text-[var(--color-mute)] leading-relaxed">
+      从 Anthropic 2024 年底的经典 playbook，到 2026 年的 Agent Loop / Runtime / MCP / Skills 分层——
+      主线一直没变：<strong>先可控，再复杂</strong>。
+    </p>
+
+    <div class="doc mt-8">
+      <h2>先分清 workflow 和 agent</h2>
+      <p>
+        Anthropic 的定义至今仍是最好的起点：<strong>workflow</strong> 是 LLM 和工具被预定义代码路径编排的系统；
+        <strong>agent</strong> 是 LLM 自主决定过程与工具使用的系统。能写 workflow 就别上 agent——
+        确定性换可靠性，永远是划算的买卖。Agent 留给那些步骤数不可预知、路径无法硬编码的任务。
+      </p>
+
+      <h2>五种工作流模式</h2>
+      <ul>
+        <li><strong>提示链（prompt chaining）</strong>：任务拆成固定序列，每步的输出是下步的输入，步间可加程序化校验门。适合能干净分解的子任务流水线。</li>
+        <li><strong>路由（routing）</strong>：先分类，再分发给专用下游。客服意图分流、按问题难度选模型，都是它。核心价值：让每种输入得到专精处理，也让小模型吃掉大头流量。</li>
+        <li><strong>并行化（parallelization）</strong>：分两类——<em>分片</em>（子任务并行，如多文档同审）和<em>投票</em>（同任务多跑几遍取共识，如多角度安全审查）。</li>
+        <li><strong>编排者-工人（orchestrator-workers）</strong>：中心 LLM 动态分解任务、派发给工人、汇总结果。和并行化的区别在于子任务<strong>不是预定义的，是现场决定的</strong>。编码 agent 改多文件就是典型。</li>
+        <li><strong>评估者-优化者（evaluator-optimizer）</strong>：一个生成、一个评审、打回重造，循环到达标。翻译润色、多轮改稿都适用——前提是评估标准明确可判。</li>
+      </ul>
+      <p>这五种模式是积木：真实系统是它们的组合，而 agent 是「编排回路本身也交给模型」的极限形态。</p>
+
+      <h2>2026 年的四层架构</h2>
+      <p>Anthropic 近一年的四篇文章把 agent 系统拆成了清晰的分层：</p>
+      <ul>
+        <li><strong>Agent Loop（推理）</strong>：决定下一步做什么。这一层保持瘦——流程不进 prompt。</li>
+        <li><strong>Runtime（执行）</strong>：真正干活的环境——代码执行、文件系统、沙箱。</li>
+        <li><strong>MCP（连接）</strong>：管「能访问什么」。权限、重试、限流、审计都是工程问题，不写进提示词。2025 年底 MCP 已捐给 Linux 基金会旗下的 Agentic AI Foundation，成为厂商中立标准。</li>
+        <li><strong>Skills（方法论）</strong>：管「怎么做」。工作流、模板、最佳实践打包成可版本化的文件集，<strong>渐进式披露</strong>：元数据 ~50 token 常驻，SKILL.md ~500 token 按需，references 2000+ token 深入时再加载——装几百个技能也不撑爆窗口。</li>
+      </ul>
+      <blockquote>「The loop reasons, the runtime executes, MCP connects, and skills guide.」</blockquote>
+      <p>
+        分层的回报是：Skills 可版本化、可审计（git 追踪），MCP 边界明确（出事能定位到具体连接），
+        loop 的 prompt 反而又短又稳。经验法则一句话：<strong>解释「如何做」用 Skills，需要「访问某物」用 MCP</strong>。
+      </p>
+
+      <h2>60% 使用，0-20% 委托</h2>
+      <p>
+        2026 年趋势报告里最值得记住的数据：开发者在约 60% 的工作中使用 AI，但能「完全委托」的只有 0-20%。
+        Rakuten 让 Claude Code 在 1250 万行的 vLLM 代码库里自主跑了 7 小时（数值准确率 99.9%）——注意，
+        那是个边界极清晰的工程任务。规模化案例的共同特征不是模型更聪明了，而是<strong>流程被标准化了</strong>。
+      </p>
+      <p>
+        竞争力的定义因此改写：不是「会不会用模型」，而是「能不能把工作拆成可验证、可复用、可规模化的流程」。
+        这也是本站四个篇章的次序逻辑——模型是地基，harness 是接口，loop 是引擎，graph 是组织形式，
+        每一层都有明确的工程纪律，跳步必翻车。
+      </p>
+
+      <h2>参考来源</h2>
+      <ul>
+        <li>Anthropic Engineering — <em>Building Effective Agents</em>（2024-12）</li>
+        <li>Anthropic — Agent Skills 设计理念 / Skills 与 MCP 协同（2025-2026）</li>
+        <li>Anthropic — <em>Eight trends defining how software gets built in 2026</em></li>
+        <li>humanlayer — <em>12-Factor Agents</em></li>
+        <li>53AI 编译 — 2026 做 Agent 的正确姿势（2026-02）</li>
+      </ul>
+    </div>
+  </article>
+</Base>

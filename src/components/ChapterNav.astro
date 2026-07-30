@@ -1,0 +1,64 @@
+---
+interface Props {
+  current?: string;
+}
+
+const { current = '' } = Astro.props;
+
+const chapters = [
+  {
+    no: '01',
+    slug: 'model',
+    name: '大模型',
+    en: 'model',
+    desc: '会调用，更要懂原理。模型即基础设施。',
+  },
+  {
+    no: '02',
+    slug: 'harness',
+    name: 'Harness 工程',
+    en: 'harness',
+    desc: '给模型造驾驶舱：工具、上下文、结构化输出。',
+  },
+  {
+    no: '03',
+    slug: 'loop',
+    name: 'Loop 工程',
+    en: 'loop',
+    desc: '让模型在循环里自我纠偏，直到收敛。',
+  },
+  {
+    no: '04',
+    slug: 'graph',
+    name: 'Graph 工程',
+    en: 'graph',
+    desc: '多智能体的编排、拓扑与涌现。',
+  },
+];
+---
+
+<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+  {
+    chapters.map((c, i) => (
+      <a
+        href={`/${c.slug}/`}
+        class:list={[
+          'panel panel-hover relative p-5 block group',
+          current === c.slug && 'border-[var(--color-line-strong)] bg-[var(--color-panel2)]',
+        ]}
+      >
+        <div class="flex items-baseline justify-between mb-3">
+          <span class="font-monox text-[11px] text-[var(--color-faint)]">{c.no}</span>
+          <span class="font-monox text-[11px] text-[var(--color-faint)] group-hover:text-[var(--color-acc)] transition-colors">
+            {c.en} {i < 3 && <span class="text-[var(--color-faint)]">→</span>}
+          </span>
+        </div>
+        <div class="text-[15px] font-medium text-[var(--color-ink)] mb-1.5">{c.name}</div>
+        <div class="text-[12.5px] leading-relaxed text-[var(--color-mute)]">{c.desc}</div>
+        {current === c.slug && (
+          <div class="absolute top-0 left-5 right-5 h-px bg-gradient-to-r from-[var(--color-acc)] to-[var(--color-acc2)]" />
+        )}
+      </a>
+    ))
+  }
+</div>

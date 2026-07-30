@@ -1,0 +1,82 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="上下文工程 · Agentic Lab" current="notes">
+  <article class="max-w-3xl mx-auto px-5 pt-16 pb-16">
+    <a href="/notes/" class="font-monox text-[12px] text-[var(--color-faint)] no-underline hover:text-[var(--color-acc)]">← 深度文章</a>
+    <div class="flex items-center gap-3 mt-5 mb-4">
+      <span class="font-monox text-[10.5px] px-2 py-0.5 rounded border border-[var(--color-line)] text-[var(--color-acc2)]">HARNESS</span>
+      <span class="font-monox text-[11px] text-[var(--color-faint)]">2026-07-30 · 8 min</span>
+    </div>
+    <h1 class="text-3xl font-semibold tracking-tight text-[var(--color-ink)] leading-tight">上下文工程：经营那个窗口，而不是写那段提示词</h1>
+    <p class="mt-4 text-[15px] text-[var(--color-mute)] leading-relaxed">
+      2025 年之后，agent 工程的能力单位从「写提示词」换成了「经营上下文窗口」。
+      这篇是对 Anthropic《Effective context engineering for AI agents》及一批 2026 年生产实践的提炼。
+    </p>
+
+    <div class="doc mt-8">
+      <h2>为什么 prompt 工程不够用了</h2>
+      <p>
+        单次问答里，提示词就是全部输入。但 agent 是长跑：几十上百轮里，窗口会被 system prompt、
+        工具 schema、检索结果、工具返回、历史消息逐层填满。<strong>模型的注意力是稀缺资源，窗口是被争用的内存</strong>——
+        你要管理的不再是「一句话怎么写」，而是「每轮调用时，窗口里该有什么」。
+      </p>
+      <p>
+        一个被广泛验证的经验：当 agent 表现异常，第一问不是「prompt 写错了什么」，而是
+        「这一轮它看到了什么」。大部分生产环境的 agent 故障，本质是上下文装配故障。
+      </p>
+
+      <h2>窗口里的七个槽位</h2>
+      <p>把每轮 LLM 调用的输入拆开，基本是这七类：</p>
+      <ul>
+        <li><strong>system prompt</strong>：稳定不变，放最上面（还能吃 prompt caching）。Anthropic 给的「金发姑娘区」：具体到能引导行为，抽象到能容纳启发式——写成 if-else 大全会脆，写成空泛口号会飘。</li>
+        <li><strong>工具 schema</strong>：每轮都在场。Berkeley 的调用榜单反复证明「工具越少越准」，2026 年的做法是按需检索工具（Tool Search），而不是 75 个连接器全量注入。</li>
+        <li><strong>检索文档</strong>：最大的变动槽位，也是最容易过量的一位——多数检索都太宽。</li>
+        <li><strong>消息历史</strong>：增长最稳定，最需要压缩策略的一位。</li>
+        <li><strong>工具返回</strong>：体积极不稳定，一次 dump 能吃掉半个窗口。要过滤、整形后再给模型。</li>
+        <li><strong>scratchpad</strong>：agent 写给自己的便签，每 N 轮让它自己重写一遍，只保留承重信息。</li>
+        <li><strong>当前任务</strong>：放最底下，离生成最近的位置。</li>
+      </ul>
+      <p>
+        静态的靠上，动态的靠下——这个顺序不是审美，是缓存命中率和注意力分配的双重优化。
+      </p>
+
+      <h2>三条主力策略：压缩、写入、隔离</h2>
+      <ul>
+        <li><strong>压缩（Compress）</strong>：历史占用到窗口 ~50% 就把最早的轮次换成模型自写的摘要，不要等到注意力涣散。Claude Code、Cursor 都是这么做的；精细做法可减掉 84% 的历史 token。</li>
+        <li><strong>写入（Write）</strong>：中间结论写到上下文之外的文件/记忆里，需要时再读回。session 日志放在窗口外，就不用做「保留什么」的不可逆压缩决策。</li>
+        <li><strong>隔离（Isolate）</strong>：子代理各自拥有干净窗口，只把 1-2k token 的浓缩摘要交还主代理。这是多代理系统 2025 年能落地的首要原因（详见<a href="/notes/multi-agent/">多智能体篇</a>）。</li>
+      </ul>
+
+      <h2>eval 的对象变了</h2>
+      <p>
+        prompt 工程时代测的是「这句话灵不灵」；上下文工程时代要测的是「装配出来的窗口对不对」。
+        工程动作随之改变：<strong>把每一轮装配完成的上下文落 trace</strong>（LangSmith / Phoenix / 自建），
+        抽 10 条失败轨迹，直接读窗口内容——检索错了？scratchpad 被旧状态污染？压缩把关键事实压丢了？
+        答案几乎 always 写在窗口里。
+      </p>
+
+      <h2>一个顺手的工具侧收益</h2>
+      <p>
+        Anthropic 内部做过一个「工具描述改写」实验：让一个 agent 专门重写含糊的 MCP 工具描述，
+        后续 agent 的任务完成时间下降了 40%。工具描述是写给 LLM 看的 API 文档——它既是 schema 槽位的成本，
+        也是模型决策的质量输入，打磨它的 ROI 高得离谱。
+      </p>
+
+      <blockquote>
+        本站的 <a href="/harness/">Harness 篇章 demo</a> 就是这些原则的微观沙盘：
+        schema 注入成本、tool result 占比、压缩开关，全部可视。
+      </blockquote>
+
+      <h2>参考来源</h2>
+      <ul>
+        <li>Anthropic Engineering — <em>Effective Context Engineering for AI Agents</em>（2025-09）</li>
+        <li>Anthropic Engineering — <em>How we built our multi-agent research system</em>（2025-06）</li>
+        <li>LangChain Blog — Context Engineering for Agents（2025-07）</li>
+        <li>Drew Breunig — How Long Contexts Fail；Karpathy on context engineering</li>
+        <li>Digital Applied — Context Engineering: Agent Reliability Playbook 2026</li>
+      </ul>
+    </div>
+  </article>
+</Base>

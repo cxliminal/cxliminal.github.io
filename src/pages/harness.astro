@@ -1,0 +1,66 @@
+---
+import Base from '../layouts/Base.astro';
+import ChapterNav from '../components/ChapterNav.astro';
+import ToolSandbox from '../components/islands/ToolSandbox.jsx';
+---
+
+<Base title="Harness 工程 · Agentic Lab" current="harness">
+  <section class="max-w-3xl mx-auto px-5 pt-16 pb-10">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="font-monox text-[11px] px-2 py-1 rounded border border-[var(--color-line)] text-[var(--color-faint)]">02 · HARNESS</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--color-ink)]">Harness 工程</h1>
+    <p class="mt-4 text-[16px] leading-relaxed text-[var(--color-mute)]">
+      同一匹马，套上鞍具才能上战场。模型的能力，是被 harness「接」出来的——
+      <strong class="text-[var(--color-ink)]">harness 就是模型外面那层驾驶舱</strong>。
+    </p>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-5 pb-12">
+    <article class="doc">
+      <h2>什么是 harness</h2>
+      <p>
+        裸模型只会一件事：给定一段文本，续写后面的文本。让它变成「agent」的一切——
+        工具定义、函数调用协议、上下文装配、结构化输出、重试与防护栏——全在模型之外，
+        这一整套外围系统就是 harness。Claude Code、Cursor、WorkBuddy 的本质差异，
+        不在它们用了什么模型，而在它们的 harness 工程水平。
+      </p>
+
+      <h2>上下文工程是第一要务</h2>
+      <p>
+        上下文窗口是 agent 唯一的工作内存，而且处处是成本：
+      </p>
+      <ul>
+        <li><strong>工具 schema 不是免费的。</strong>每注册一个工具，它的 JSON schema 每一轮都占着 tokens。20 个粗放定义的工具，能在开场就吃掉的上下文比一段长对话还多。</li>
+        <li><strong>tool result 是第一大消耗源。</strong>一次网页抓取、一次文件读取，动辄几千 tokens 涌进来。不做压缩，窗口几轮就爆。</li>
+        <li><strong>顺序即提示。</strong>system prompt 怎么写、示例放在哪、历史保留多少，都是可控变量——这就是 prompt engineering 升级为 context engineering 的含义。</li>
+      </ul>
+      <blockquote>
+        好的 harness 工程师像经营内存一样经营上下文：精简 schema、压缩观测、显式管理状态。
+      </blockquote>
+
+      <h2>动手：看上下文怎么被吃掉</h2>
+      <p>
+        下面的沙盒模拟了一个带 4 个工具的 agent。随便问点什么，盯住右侧的上下文窗口条：
+        注意 <strong>tool result（琥珀色）</strong> 膨胀得有多快，然后打开「压缩旧的 tool result」——
+        那就是上下文工程每天都在做的手术。
+      </p>
+    </article>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-5 pb-16">
+    <a href="/notes/context-engineering/" class="panel panel-hover flex items-center gap-3 p-4 mb-4 no-underline group">
+      <span class="font-monox text-[10.5px] px-2 py-0.5 rounded border border-[var(--color-line)] text-[var(--color-acc2)] shrink-0">延伸阅读</span>
+      <span class="text-[13px] text-[var(--color-mute)] group-hover:text-[var(--color-ink)] transition-colors">上下文工程：经营那个窗口，而不是写那段提示词</span>
+      <span class="ml-auto text-[var(--color-faint)] group-hover:text-[var(--color-acc)] shrink-0">→</span>
+    </a>
+    <ToolSandbox client:load />
+  </section>
+
+  <section class="max-w-5xl mx-auto px-5 pb-8">
+    <div class="mb-5 flex items-baseline justify-between">
+      <h2 class="text-lg font-semibold text-[var(--color-ink)]">下一篇章：让模型在循环里自我纠偏</h2>
+    </div>
+    <ChapterNav current="harness" />
+  </section>
+</Base>

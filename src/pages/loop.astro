@@ -1,0 +1,66 @@
+---
+import Base from '../layouts/Base.astro';
+import ChapterNav from '../components/ChapterNav.astro';
+import LoopSimulator from '../components/islands/LoopSimulator.jsx';
+---
+
+<Base title="Loop 工程 · Agentic Lab" current="loop">
+  <section class="max-w-3xl mx-auto px-5 pt-16 pb-10">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="font-monox text-[11px] px-2 py-1 rounded border border-[var(--color-line)] text-[var(--color-faint)]">03 · LOOP</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--color-ink)]">Loop 工程</h1>
+    <p class="mt-4 text-[16px] leading-relaxed text-[var(--color-mute)]">
+      agent = 模型 + 循环。<strong class="text-[var(--color-ink)]">智能不住在模型里，住在 while 循环里。</strong>
+    </p>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-5 pb-12">
+    <article class="doc">
+      <h2>ReAct：三拍子循环</h2>
+      <p>
+        把模型的输出接回它的输入，智能就开始涌现。最经典的结构是 ReAct：
+        <strong>thought → action → observation</strong>，一圈一圈转下去，直到任务完成。
+        模型负责每一圈里的判断，loop 负责让判断形成链条。
+        单看一圈，它只是个会调工具的聊天机器人；转上十圈，它能独立完成查资料、试错、修正、交付的完整任务。
+      </p>
+
+      <h2>收敛是目标，防护是底线</h2>
+      <p>
+        loop 工程的核心问题不是「怎么转起来」，而是<strong>「怎么停下来」</strong>：
+      </p>
+      <ul>
+        <li><strong>收敛判据</strong>——模型什么时候该确信「信息够了，可以回答了」？判据太松，答案草率；太紧，循环空转。</li>
+        <li><strong>max_iterations</strong>——硬护栏。模型偶尔会陷入「再搜一次就更完美」的强迫症，每一圈都是真金白银的 tokens。</li>
+        <li><strong>token 预算</strong>——比轮数更本质的约束。预算耗尽时强制收口，用已有信息给出当前最佳答案。</li>
+        <li><strong>错误即输入</strong>——工具报错不该终止循环，而该作为 observation 喂回去，让模型自我纠偏。这是 loop 比单次调用强的根本原因。</li>
+      </ul>
+      <blockquote>
+        没有防护栏的 loop 是一台烧钱机器；没有 loop 的模型是一个昂贵的自动补全。
+      </blockquote>
+
+      <h2>动手：把循环放在显微镜下</h2>
+      <p>
+        下面的模拟器把每个 iteration 的 thought / action / observation 逐帧放出来。
+        三个剧本：<strong>收敛</strong>、<strong>自我纠偏</strong>、<strong>发散防护</strong>。
+        重点玩第三个——拖动右侧的 max_iterations，看护栏在不同位置把失控的循环拦下来。
+      </p>
+    </article>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-5 pb-16">
+    <a href="/notes/agentic-loop/" class="panel panel-hover flex items-center gap-3 p-4 mb-4 no-underline group">
+      <span class="font-monox text-[10.5px] px-2 py-0.5 rounded border border-[var(--color-line)] text-[var(--color-acc2)] shrink-0">延伸阅读</span>
+      <span class="text-[13px] text-[var(--color-mute)] group-hover:text-[var(--color-ink)] transition-colors">Agentic Loop 工程：while 循环里的收敛学</span>
+      <span class="ml-auto text-[var(--color-faint)] group-hover:text-[var(--color-acc)] shrink-0">→</span>
+    </a>
+    <LoopSimulator client:load />
+  </section>
+
+  <section class="max-w-5xl mx-auto px-5 pb-8">
+    <div class="mb-5 flex items-baseline justify-between">
+      <h2 class="text-lg font-semibold text-[var(--color-ink)]">下一篇章：把循环摊开成图</h2>
+    </div>
+    <ChapterNav current="loop" />
+  </section>
+</Base>

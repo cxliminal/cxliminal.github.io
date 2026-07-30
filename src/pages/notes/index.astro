@@ -1,0 +1,66 @@
+---
+import Base from '../../layouts/Base.astro';
+
+const notes = [
+  {
+    slug: 'context-engineering',
+    tag: 'HARNESS',
+    title: '上下文工程：经营那个窗口，而不是写那段提示词',
+    desc: 'Prompt 工程已死，上下文工程当立。七个槽位、三条压缩策略、子代理隔离，以及「agent 挂了先查上下文」的调试心法。',
+    date: '2026-07-30',
+    read: '8 min',
+  },
+  {
+    slug: 'agentic-loop',
+    tag: 'LOOP',
+    title: 'Agentic Loop 工程：while 循环里的收敛学',
+    desc: 'observe → reason → act 的三拍子怎么搭，终止条件与 token 预算怎么定，为什么 eval 的对象是轨迹而不是答案。',
+    date: '2026-07-30',
+    read: '7 min',
+  },
+  {
+    slug: 'multi-agent',
+    tag: 'GRAPH',
+    title: '多智能体的真相：token 消耗解释 80% 的性能差异',
+    desc: 'Anthropic 多代理研究系统复盘：什么时候该上多代理（三个信号）、上下文隔离为什么是关键、以及 3-10 倍成本你认不认。',
+    date: '2026-07-30',
+    read: '9 min',
+  },
+  {
+    slug: 'effective-agents',
+    tag: 'MODEL+',
+    title: '构建有效智能体：五种工作流模式与 2026 四层架构',
+    desc: '从 Anthropic 经典 playbook 到 Agent Loop / Runtime / MCP / Skills 分层——先把单 agent 做可控，再谈编排。',
+    date: '2026-07-30',
+    read: '10 min',
+  },
+];
+---
+
+<Base title="深度文章 · Agentic Lab" current="notes">
+  <section class="max-w-3xl mx-auto px-5 pt-16 pb-10">
+    <div class="chip font-monox mb-4">NOTES · 调研纪要</div>
+    <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--color-ink)]">深度文章</h1>
+    <p class="mt-4 text-[15px] leading-relaxed text-[var(--color-mute)]">
+      不是笔记，是调研。每篇都基于一手资料（Anthropic 工程博客、生产案例、论文与开源实践）提炼而成，
+      和四个篇章的可交互 demo 互为表里。
+    </p>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-5 pb-16 space-y-3">
+    {
+      notes.map((n) => (
+        <a href={`/notes/${n.slug}/`} class="panel panel-hover block p-6 no-underline group">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="font-monox text-[10.5px] px-2 py-0.5 rounded border border-[var(--color-line)] text-[var(--color-acc2)]">{n.tag}</span>
+            <span class="font-monox text-[11px] text-[var(--color-faint)]">{n.date} · {n.read}</span>
+          </div>
+          <h2 class="text-[17px] font-semibold text-[var(--color-ink)] leading-snug group-hover:text-[var(--color-acc)] transition-colors">
+            {n.title}
+          </h2>
+          <p class="text-[13px] text-[var(--color-mute)] leading-relaxed mt-2">{n.desc}</p>
+        </a>
+      ))
+    }
+  </section>
+</Base>

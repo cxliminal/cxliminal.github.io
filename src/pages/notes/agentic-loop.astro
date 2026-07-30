@@ -1,0 +1,74 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="Agentic Loop 工程 · Agentic Lab" current="notes">
+  <article class="max-w-3xl mx-auto px-5 pt-16 pb-16">
+    <a href="/notes/" class="font-monox text-[12px] text-[var(--color-faint)] no-underline hover:text-[var(--color-acc)]">← 深度文章</a>
+    <div class="flex items-center gap-3 mt-5 mb-4">
+      <span class="font-monox text-[10.5px] px-2 py-0.5 rounded border border-[var(--color-line)] text-[var(--color-acc2)]">LOOP</span>
+      <span class="font-monox text-[11px] text-[var(--color-faint)]">2026-07-30 · 7 min</span>
+    </div>
+    <h1 class="text-3xl font-semibold tracking-tight text-[var(--color-ink)] leading-tight">Agentic Loop 工程：while 循环里的收敛学</h1>
+    <p class="mt-4 text-[15px] text-[var(--color-mute)] leading-relaxed">
+      Agent 和「调了一次模型」的区别，全在一个循环里。循环设计得好是智能，设计得不好是烧钱机器。
+    </p>
+
+    <div class="doc mt-8">
+      <h2>三拍子：observe → reason → act</h2>
+      <p>
+        所有 agentic loop 的骨架都一样：<strong>观察</strong>（读工具返回/环境状态）→
+        <strong>推理</strong>（决定下一步动作）→ <strong>行动</strong>（调工具/改环境）→ 回到观察，直到任务完成。
+        ReAct 把它显式化成 thought/action/observation 三元组，价值不在于格式，而在于
+        <strong>让每一步推理可被检查、被回放、被计入成本</strong>。
+      </p>
+      <p>
+        这个循环之所以 work，是分工带来的：LLM 负责不确定的推理与决策，工具负责确定性的执行。
+        推理交给模型，执行交给代码——这就是 agent 比「让模型直接写答案」可靠的根本原因。
+      </p>
+
+      <h2>收敛是设计出来的，不是等出来的</h2>
+      <p>一个生产级 loop 必须显式回答三个问题：</p>
+      <ul>
+        <li><strong>什么时候算完？</strong>终止条件要可判定：模型给出 final answer、检测到重复动作、还是达到信息充分判据。「让模型自己觉得可以了」是最弱的终止条件，必须外加硬约束。</li>
+        <li><strong>最多烧多少？</strong>max_iterations + token 预算双保险。预算按任务类型定：简单查询 3-10 次工具调用封顶；研究类任务才配更多。</li>
+        <li><strong>兜不住怎么办？</strong>护栏触发时强制收口：基于已有信息给出「当前最佳回答 + 不确定性声明」，而不是报错甩锅。</li>
+      </ul>
+      <p>
+        本站 <a href="/loop/">Loop 篇章 demo</a> 的「发散防护」剧本演示的就是第三条：
+        同一个任务，max_iterations 从 6 调到 2，护栏触发点和最终输出完全不同——护栏不是保险丝，是产品行为的一部分。
+      </p>
+
+      <h2>自我纠偏：把错误当输入</h2>
+      <p>
+        健康 loop 的关键性质是<strong>工具报错不终止循环，而是进入下一轮观察</strong>。
+        参数错了改参数，路径错了换路径，结论被评审打回就重写——Reflexion 那套「口头强化」的本质，
+        就是给 loop 增加一个「对上一次失败显式反思」的拍子。判断一个 agent 框架成不成熟，
+        看它的错误路径比看它的成功路径更准。
+      </p>
+
+      <h2>eval 的对象是轨迹，不是答案</h2>
+      <p>
+        单轮问答 eval 看输出对不对；loop 的 eval 要看整条轨迹：动作选择是否合理、有没有冗余调用、
+        第几轮开始跑偏、预算消耗分布如何。工程落地就是两句话：
+        <strong>每一轮都落 trace；拿失败轨迹回灌成新的测试用例</strong>。
+        eval-driven development 在 loop 时代的含义是——你的测试集里应该躺着一堆真实跑偏过的循环。
+      </p>
+
+      <h2>和上下文工程的接口</h2>
+      <p>
+        每一轮迭代都是一次全新的上下文装配：observe 阶段拿到什么，直接决定 reason 阶段的质量。
+        所以 loop 工程和<a href="/notes/context-engineering/">上下文工程</a>是一体两面：
+        一个管「每轮发生什么」，一个管「每轮看见什么」。
+      </p>
+
+      <h2>参考来源</h2>
+      <ul>
+        <li>Yao et al. — <em>ReAct: Synergizing Reasoning and Acting in Language Models</em>（2022）</li>
+        <li>Shinn et al. — <em>Reflexion: Language Agents with Verbal Reinforcement Learning</em>（2023）</li>
+        <li>Anthropic Engineering — <em>Building Effective Agents</em>（2024-12）</li>
+        <li>outsmartchad/agentic-engineering — Tool-Use Architecture &amp; Eval-Driven Development（2025-2026）</li>
+      </ul>
+    </div>
+  </article>
+</Base>

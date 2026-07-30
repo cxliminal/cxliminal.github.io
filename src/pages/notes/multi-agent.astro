@@ -1,0 +1,79 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="多智能体的真相 · Agentic Lab" current="notes">
+  <article class="max-w-3xl mx-auto px-5 pt-16 pb-16">
+    <a href="/notes/" class="font-monox text-[12px] text-[var(--color-faint)] no-underline hover:text-[var(--color-acc)]">← 深度文章</a>
+    <div class="flex items-center gap-3 mt-5 mb-4">
+      <span class="font-monox text-[10.5px] px-2 py-0.5 rounded border border-[var(--color-line)] text-[var(--color-acc2)]">GRAPH</span>
+      <span class="font-monox text-[11px] text-[var(--color-faint)]">2026-07-30 · 9 min</span>
+    </div>
+    <h1 class="text-3xl font-semibold tracking-tight text-[var(--color-ink)] leading-tight">多智能体的真相：token 消耗解释 80% 的性能差异</h1>
+    <p class="mt-4 text-[15px] text-[var(--color-mute)] leading-relaxed">
+      Anthropic 的多代理研究系统是公开资料里最详实的生产级多智能体复盘。
+      它最反直觉的结论是：多代理的价值首先不是「更聪明」，而是「上下文隔离」。
+    </p>
+
+    <div class="doc mt-8">
+      <h2>那个 80% 的数字</h2>
+      <p>
+        在 Anthropic 的 BrowseComp 评测里，<strong>token 消耗量解释了约 80% 的性能方差</strong>，
+        其次是工具调用次数和模型选择。这句话有两层含义：往任务里砸 token 确实有效（多代理的本质就是合法地砸），
+        以及——你怎么花这些 token，比换哪个模型重要得多。上下文管理是第一性能杠杆，模型选型往后排。
+      </p>
+
+      <h2>什么时候才该上多代理：三个信号</h2>
+      <p>2026 年的共识是「默认单代理，看到信号再拆」。值得拆的信号只有三种：</p>
+      <ul>
+        <li><strong>上下文被噪音淹没</strong>：某子任务要翻 1000+ token 的原始材料，但主对话只需要一句结论。让子代理去翻，交回摘要。</li>
+        <li><strong>搜索空间扫不完</strong>：竞品研究、根因排查这类一分为十几的任务，单代理的窗口装不下所有分叉。代价先说清：并行通常意味着 <strong>3-10 倍 token 消耗</strong>。</li>
+        <li><strong>工具太多互相打架</strong>：一个代理揣着 20+ 跨域工具，注意力会涣散、流程会串场。按领域拆专家，各拿各的工具箱。</li>
+      </ul>
+      <p>不满足这三条的「多代理」，基本是在花钱买复杂度。</p>
+
+      <h2>上下文隔离是真正的杀器</h2>
+      <p>
+        Anthropic 架构的核心：lead agent（Opus 4）做规划与汇总，子代理（Sonnet 4）各自拥有<strong>完全独立的上下文窗口</strong>，
+        并行搜索后只交回 1,000-2,000 token 的浓缩摘要。主代理的窗口里积累的是蒸馏过的洞察，而不是原始检索轨迹——
+        这就避免了「context clash」：多条工作流互相矛盾的中间信息在同一个窗口里打架。
+      </p>
+      <p>
+        配套的规模法则：简单事实查询 = 1 代理 + 3-10 次工具调用；比较类研究 = 2-4 个子代理；
+        复杂研究 = 10+ 个职责清晰切分的子代理。lead 同时扇出 3-5 个子代理（而非串行），复杂查询的研究时间最多可缩 90%。
+      </p>
+
+      <h2>拓扑即协议</h2>
+      <p>常见的三种编排拓扑，对应三种协作协议：</p>
+      <ul>
+        <li><strong>流水线（pipeline）</strong>：线性接力，适合工序明确的任务（检索→撰稿→审核）。可以有回边——审核打回就是一条受控的环。</li>
+        <li><strong>主管-工人（supervisor）</strong>：中心节点分派与汇总，工人互不通信。可观测性最好，是多数生产系统的选择。</li>
+        <li><strong>辩论（debate）</strong>：多角色互相质询 + 评委收敛。适合答案空间开放、需要对抗性审查的问题，但成本最高。</li>
+      </ul>
+      <p>
+        选拓扑的本质是定义「谁跟谁说话」。这个决定一旦做出，系统的能力上限和成本曲线就都定了——
+        本站 <a href="/graph/">Graph 篇章 demo</a> 可以亲手跑这三种协议的消息流。
+      </p>
+
+      <h2>多代理的真实代价清单</h2>
+      <ul>
+        <li>token 成本 3-10 倍，且随并行度超线性增长；</li>
+        <li>协调本身成为新的故障源（合并冲突、互相带偏）；</li>
+        <li>可观测性变差：问题出在第几个子代理的哪一步，排查成本陡增；</li>
+        <li>子代理上下文不足时会「饿死」——orchestrator 必须把足够的任务背景传下去。</li>
+      </ul>
+      <p>
+        所以正确的工程顺序永远是：<strong>先把单代理做可控（终止条件、预算、eval），再为多代理设计协议</strong>。
+        跳步的团队，最后都在给一堆不稳定的黑盒当调解员。
+      </p>
+
+      <h2>参考来源</h2>
+      <ul>
+        <li>Anthropic Engineering — <em>How we built our multi-agent research system</em>（2025-06）</li>
+        <li>Anthropic — 多 Agent 系统使用时机（2026-01，经 53AI 编译）</li>
+        <li>Digital Applied — Context Engineering: Agent Reliability Playbook 2026</li>
+        <li>LangGraph 文档 — 多代理编排模式</li>
+      </ul>
+    </div>
+  </article>
+</Base>
