@@ -84,7 +84,7 @@ export default function ToolSandbox() {
       if (!alive()) return;
       push({ type: 'call', name: c.name, args: c.args, tokens: est(JSON.stringify(c.args)) + 12 });
       await sleep(650);
-      const obs = executeTool(c.name, c.args);
+      const obs = await executeTool(c.name, c.args);
       if (!alive()) return;
       push({ type: 'obs', name: c.name, data: obs, tokens: est(JSON.stringify(obs)) });
       obsParts.push({ call: c, obs });
@@ -163,7 +163,7 @@ export default function ToolSandbox() {
         if (!alive()) return;
         push({ type: 'call', name: tu.name, args: tu.input, tokens: est(JSON.stringify(tu.input)) + 12 });
         await sleep(250);
-        const obs = executeTool(tu.name, tu.input);
+        const obs = await executeTool(tu.name, tu.input);
         if (!alive()) return;
         push({ type: 'obs', name: tu.name, data: obs, tokens: est(JSON.stringify(obs)) });
         results.push({ type: 'tool_result', tool_use_id: tu.id, content: JSON.stringify(obs) });

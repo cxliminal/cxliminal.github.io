@@ -1,51 +1,45 @@
 import { useState, useRef, useEffect } from 'react';
-import * as webllm from '@mlc-ai/web-llm';
 
-const COMPACT_PREFS = ['Qwen2.5-0.5B-Instruct', 'SmolLM2-360M-Instruct', 'Llama-3.2-1B-Instruct', 'Qwen2-0.5B-Instruct'];
-const FULL_PREFS = ['Qwen2.5-0.5B-Instruct', 'Qwen2.5-1.5B-Instruct', 'Llama-3.2-1B-Instruct', 'Llama-3.2-3B-Instruct', 'SmolLM2-360M-Instruct'];
+/* web-llm runtime 体积数 MB，按需加载：点「加载模型」时才动态 import，首屏不背这个包 */
+const loadWebllm = () => import('@mlc-ai/web-llm');
+
 const SYSTEM = '你是 Agentic Lab 网站里的页内演示模型，运行在访客的浏览器里。用简洁、准确的中文回答，回答控制在 150 字以内。';
 const PRESETS = ['用一句话解释 context engineering', '写一个 4 行以内的 Python 快排', '用大白话解释什么是 agentic loop'];
+
+const COMPACT_OPTIONS = ['Qwen2.5-0.5B-Instruct-q4f16_1-MLC'];
+const FULL_OPTIONS = [
+  'Qwen2.5-0.5B-Instruct-q4f16_1-MLC',
+  'Qwen2.5-1.5B-Instruct-q4f16_1-MLC',
+  'Llama-3.2-1B-Instruct-q4f16_1-MLC',
+  'Llama-3.2-3B-Instruct-q4f16_1-MLC',
+  'SmolLM2-360M-Instruct-q4f16_1-MLC',
+];
+const FALLBACK_KWS = ['Qwen2.5-0.5B-Instruct', 'SmolLM2-360M-Instruct', 'Llama-3.2-1B-Instruct', 'Qwen2-0.5B-Instruct'];
 
 /* 引擎提升为模块级单例：组件卸载/页面切换后模型不必重载 */
 let sharedEngine = null;
 let sharedModelId = '';
 
-function modelList() {
+function ensureModel(webllm, wanted) {
+  let list = [];
   try {
-    return webllm.prebuiltAppConfig.model_list.map((m) => m.model_id);
+    list = webllm.prebuiltAppConfig.model_list.map((m) => m.model_id);
   } catch {
-    return [];
+    /* noop */
   }
-}
-
-function resolveModel(prefs) {
-  const list = modelList();
-  for (const kw of prefs) {
+  if (list.includes(wanted)) return wanted;
+  for (const kw of FALLBACK_KWS) {
     const hit = list.find((id) => id.includes(kw) && id.includes('q4f16_1'));
     if (hit) return hit;
   }
-  return list.find((id) => id.includes('q4f16_1')) || list[0] || prefs[0] + '-q4f16_1-MLC';
-}
-
-function resolveOptions() {
-  const list = modelList();
-  const seen = new Set();
-  const out = [];
-  for (const kw of FULL_PREFS) {
-    const hit = list.find((id) => id.includes(kw) && id.includes('q4f16_1') && !seen.has(id));
-    if (hit) {
-      seen.add(hit);
-      out.push(hit);
-    }
-  }
-  return out.length ? out : [resolveModel(COMPACT_PREFS)];
+  return list.find((id) => id.includes('q4f16_1')) || wanted;
 }
 
 export default function WebLlmChat({ compact = false }) {
   const [status, setStatus] = useState(() => (sharedEngine ? 'ready' : 'checking')); // checking | idle | loading | ready | unsupported | error
   const [progress, setProgress] = useState({ text: '', progress: 0 });
-  const [modelId, setModelId] = useState(() => sharedModelId || (compact ? resolveModel(COMPACT_PREFS) : resolveModel(FULL_PREFS)));
-  const [options] = useState(() => resolveOptions());
+  const [options] = useState(() => (compact ? COMPACT_OPTIONS : FULL_OPTIONS));
+  const [modelId, setModelId] = useState(() => sharedModelId || (compact ? COMPACT_OPTIONS[0] : FULL_OPTIONS[0]));
   const [msgs, setMsgs] = useState([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
@@ -75,10 +69,11 @@ export default function WebLlmChat({ compact = false }) {
   }, [msgs, streaming]);
 
   const load = async (target) => {
-    const id = target || modelId;
     setStatus('loading');
     setErrMsg('');
     try {
+      const webllm = await loadWebllm();
+      const id = ensureModel(webllm, target || modelId);
       if (sharedEngine) {
         await sharedEngine.reload(id);
       } else {

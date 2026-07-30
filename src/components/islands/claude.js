@@ -53,6 +53,35 @@ export function makeClient() {
 
 /* ---------- 工具层：schema（注入上下文）+ 本地执行（Agent SDK 同构的最小 harness） ---------- */
 
+const CITY_PINYIN = {
+  北京: 'Beijing', 上海: 'Shanghai', 广州: 'Guangzhou', 深圳: 'Shenzhen', 杭州: 'Hangzhou',
+  成都: 'Chengdu', 重庆: 'Chongqing', 西安: "Xi'an", 南京: 'Nanjing', 武汉: 'Wuhan',
+  苏州: 'Suzhou', 天津: 'Tianjin', 长沙: 'Changsha', 青岛: 'Qingdao', 厦门: 'Xiamen',
+};
+
+async function realWeather(city) {
+  const q = CITY_PINYIN[city] || city;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 6000);
+  try {
+    const r = await fetch(`https://wttr.in/${encodeURIComponent(q)}?format=j1&lang=zh`, { signal: ctrl.signal });
+    if (!r.ok) throw new Error('weather api ' + r.status);
+    const j = await r.json();
+    const cur = j.current_condition && j.current_condition[0];
+    if (!cur) throw new Error('bad payload');
+    return {
+      city,
+      temp: Number(cur.temp_C),
+      condition: (cur.lang_zh && cur.lang_zh[0] && cur.lang_zh[0].value) || cur.weatherDesc[0].value,
+      humidity: cur.humidity + '%',
+      wind: cur.windspeedKmph + ' km/h',
+      live: true,
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function mockWeather(city) {
   let h = 0;
   for (const ch of String(city)) h = (h * 31 + ch.charCodeAt(0)) % 997;
@@ -111,11 +140,18 @@ export const TOOL_DEFS = [
   },
 ];
 
-export function executeTool(name, input) {
+export async function executeTool(name, input) {
   try {
     if (name === 'calculator') return { value: safeCalc(input && input.expr) };
-    if (name === 'get_weather') return mockWeather((input && input.city) || '北京');
-    if (name === 'web_search') return { results: mockSearch((input && input.query) || '') };
+    if (name === 'get_weather') {
+      const city = (input && input.city) || '北京';
+      try {
+        return await realWeather(city);
+      } catch {
+        return { ...mockWeather(city), note: '实时接口不可用，已回退模拟数据' };
+      }
+    }
+    if (name === 'web_search') return { results: mockSearch((input && input.query) || ''), note: '演示环境模拟结果' };
     if (name === 'get_time') return { time: new Date().toLocaleString('zh-CN', { hour12: false }) };
     return { error: `unknown tool: ${name}` };
   } catch (e) {

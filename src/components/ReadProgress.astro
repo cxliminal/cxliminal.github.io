@@ -1,0 +1,12 @@
+<div id="read-progress" class="fixed top-0 left-0 h-[3px] z-50 w-0 bg-gradient-to-r from-[var(--color-acc)] to-[var(--color-acc2)]"></div>
+<script>
+  function updateReadProgress() {
+    const el = document.getElementById('read-progress');
+    if (!el) return;
+    const h = document.documentElement;
+    const max = h.scrollHeight - h.clientHeight;
+    el.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+  }
+  document.addEventListener('scroll', updateReadProgress, { passive: true });
+  document.addEventListener('astro:page-load', updateReadProgress);
+</script>

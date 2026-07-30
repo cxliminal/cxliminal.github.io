@@ -1,5 +1,22 @@
 ---
 import Base from '../layouts/Base.astro';
+import { execSync } from 'node:child_process';
+
+/* 构建期读取 git 历史：构建日志真的跟着 commit 生长（无 .git 环境降级为静态文案） */
+let commits = [];
+try {
+  const out = execSync('git log --format="%h|%ad|%s" --date=short -10', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  commits = out
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .map((l) => {
+      const [hash, date, ...msg] = l.split('|');
+      return { hash, date, msg: msg.join('|') };
+    });
+} catch {
+  commits = [];
+}
 
 const decisions = [
   { q: '站点形态', a: '互动实验室', note: '四篇章结构，每章 = 认知 + 可玩 demo + 工程笔记。数字花园与终端风落选。' },
@@ -85,6 +102,26 @@ const stack = [
         </li>
       </ol>
     </div>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-5 pb-8">
+    {
+      commits.length > 0 && (
+        <div class="panel p-6">
+          <h2 class="text-[15px] font-semibold text-[var(--color-ink)] mb-1.5">commit 时间线</h2>
+          <p class="text-[12px] text-[var(--color-faint)] mb-4">构建期从 git log 自动读取，随每次提交生长。</p>
+          <div class="space-y-2 font-monox text-[12px]">
+            {commits.map((c) => (
+              <div class="flex items-baseline gap-3">
+                <span class="text-[var(--color-acc2)] shrink-0">{c.hash}</span>
+                <span class="text-[var(--color-faint)] shrink-0">{c.date}</span>
+                <span class="text-[var(--color-mute)] truncate">{c.msg}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
   </section>
 
   <section class="max-w-3xl mx-auto px-5 pb-8">

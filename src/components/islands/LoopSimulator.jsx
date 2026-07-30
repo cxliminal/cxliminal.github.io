@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { makeClient, getKey, getModel, executeTool, TOOL_DEFS } from './claude.js';
 import KeyPanel from './KeyPanel.jsx';
+import LocalLoopChat from './LocalLoopChat.jsx';
 
 const est = (s) => Math.max(4, Math.ceil(String(s).length / 2));
 
@@ -373,7 +374,7 @@ function LiveMode() {
       for (const tu of toolUses) {
         if (!alive()) return;
         setItems((prev) => [...prev, { kind: 'action', name: tu.name, args: tu.input, iter: iter + 1 }]);
-        const obs = executeTool(tu.name, tu.input);
+        const obs = await executeTool(tu.name, tu.input);
         if (!alive()) return;
         setItems((prev) => [...prev, { kind: 'obs', data: obs, iter: iter + 1 }]);
         results.push({ type: 'tool_result', tool_use_id: tu.id, content: JSON.stringify(obs) });
@@ -542,8 +543,14 @@ export default function LoopSimulator() {
         >
           Claude 实战（BYOK）
         </button>
+        <button
+          onClick={() => setTab('local')}
+          className={`chip font-monox cursor-pointer transition-colors ${tab === 'local' ? 'border-[var(--color-acc2)] text-[var(--color-acc2)] bg-[rgba(167,139,250,0.1)]' : 'hover:text-[var(--color-ink)]'}`}
+        >
+          本地模型实战（WebLLM）
+        </button>
       </div>
-      {tab === 'script' ? <ScriptMode /> : <LiveMode />}
+      {tab === 'script' ? <ScriptMode /> : tab === 'live' ? <LiveMode /> : <LocalLoopChat />}
     </div>
   );
 }

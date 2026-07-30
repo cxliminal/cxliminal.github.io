@@ -11,6 +11,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
     "@astrojs/react": "^4.2.0",
+    "@astrojs/rss": "^4.0.11",
+    "@astrojs/sitemap": "^3.2.1",
     "@mlc-ai/web-llm": "^0.2.79",
     "astro": "^5.5.0",
     "react": "^19.0.0",
@@ -20,6 +22,7 @@
     "@tailwindcss/vite": "^4.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "sharp": "^0.33.5",
     "tailwindcss": "^4.0.0"
   }
 }

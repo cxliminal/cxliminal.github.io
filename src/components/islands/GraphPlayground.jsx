@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const TOPOS = {
+const BASE_TOPOS = {
   pipeline: {
     name: '流水线',
     desc: '线性接力，审核不通过会打回——图里也能有环。',
@@ -64,6 +64,16 @@ const TOPOS = {
   },
 };
 
+const DEFAULT_CUSTOM = {
+  nodes: [
+    { id: 'a1', label: '规划', tone: 'boss' },
+    { id: 'a2', label: '执行', tone: 'acc' },
+    { id: 'a3', label: '检查', tone: 'amber' },
+  ],
+  edges: [['a1', 'a2'], ['a2', 'a3']],
+  script: 'a1,a2,任务拆解完成\na2,a3,产出初版\na3,a2,检查不通过：重做\na2,a3,产出终版',
+};
+
 const TONE = {
   gray: { fill: '#1a1a28', stroke: '#62627a', text: '#9b9bb4' },
   acc: { fill: 'rgba(109,141,255,0.14)', stroke: '#6d8dff', text: '#b7c5ff' },
@@ -72,19 +82,37 @@ const TONE = {
   amber: { fill: 'rgba(251,191,36,0.14)', stroke: '#fbbf24', text: '#ffe1a3' },
 };
 
+function loadCustom() {
+  try {
+    const raw = localStorage.getItem('agenticlab_custom_topo');
+    if (raw) return JSON.parse(raw);
+  } catch {
+    /* noop */
+  }
+  return DEFAULT_CUSTOM;
+}
+
 export default function GraphPlayground() {
   const [topoId, setTopoId] = useState('pipeline');
+  const [custom, setCustom] = useState(() => (typeof window === 'undefined' ? DEFAULT_CUSTOM : loadCustom()));
+  const [editMode, setEditMode] = useState(null); // null | 'edge' | 'delete'
+  const [pending, setPending] = useState(null); // 连边模式：第一个选中的节点
   const [pos, setPos] = useState(() => {
     const init = {};
-    for (const [k, t] of Object.entries(TOPOS)) {
+    for (const [k, t] of Object.entries(BASE_TOPOS)) {
       init[k] = {};
       for (const n of t.nodes) init[k][n.id] = { x: n.x, y: n.y };
     }
+    init.custom = {};
+    const saved = typeof window === 'undefined' ? DEFAULT_CUSTOM : loadCustom();
+    saved.nodes.forEach((n, i) => {
+      init.custom[n.id] = { x: 200 + i * 180, y: 210 };
+    });
     return init;
   });
   const [running, setRunning] = useState(false);
   const [active, setActive] = useState(null);
-  const [packet, setPacket] = useState(null); // {x,y}
+  const [packet, setPacket] = useState(null);
   const [hotEdge, setHotEdge] = useState(null);
   const [log, setLog] = useState([]);
   const svgRef = useRef(null);
@@ -92,13 +120,38 @@ export default function GraphPlayground() {
   const runRef = useRef(0);
   const logRef = useRef(null);
 
-  const topo = TOPOS[topoId];
+  const isCustom = topoId === 'custom';
+  const topo = isCustom
+    ? {
+        name: '自定义',
+        desc: '双击节点改名；用工具栏加节点、连边、删点；剧本每行一条：起点,终点,消息。',
+        nodes: custom.nodes.map((n) => ({ ...n, x: (pos.custom[n.id] || {}).x ?? 380, y: (pos.custom[n.id] || {}).y ?? 210 })),
+        edges: custom.edges,
+        script: custom.script
+          .split('\n')
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .map((l) => {
+            const [f, t, ...rest] = l.split(/[,，]/);
+            return { f: (f || '').trim(), t: (t || '').trim(), msg: rest.join('，').trim() || '消息' };
+          })
+          .filter((s) => custom.nodes.some((n) => n.id === s.f) && (custom.nodes.some((n) => n.id === s.t) || s.f === s.t)),
+      }
+    : BASE_TOPOS[topoId];
   const P = pos[topoId];
 
   useEffect(() => {
     const el = logRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [log]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('agenticlab_custom_topo', JSON.stringify(custom));
+    } catch {
+      /* noop */
+    }
+  }, [custom]);
 
   const toSvg = (e) => {
     const rect = svgRef.current.getBoundingClientRect();
@@ -111,8 +164,32 @@ export default function GraphPlayground() {
   const onNodeDown = (id) => (e) => {
     if (running) return;
     e.preventDefault();
+    if (isCustom && editMode === 'edge') {
+      if (!pending) setPending(id);
+      else if (pending !== id) {
+        setCustom((c) => (c.edges.some(([a, b]) => a === pending && b === id) ? c : { ...c, edges: [...c.edges, [pending, id]] }));
+        setPending(null);
+      } else setPending(null);
+      return;
+    }
+    if (isCustom && editMode === 'delete') {
+      setCustom((c) => ({
+        nodes: c.nodes.filter((n) => n.id !== id),
+        edges: c.edges.filter(([a, b]) => a !== id && b !== id),
+        script: c.script,
+      }));
+      return;
+    }
     const p = toSvg(e);
-    dragRef.current = { id, dx: p.x - P[id].x, dy: p.y - P[id].y };
+    dragRef.current = { id, dx: p.x - P[id].x, dy: p.y - P[id].y, moved: false };
+  };
+
+  const onNodeDoubleClick = (n) => {
+    if (!isCustom || running) return;
+    const label = window.prompt('节点名称', n.label);
+    if (label && label.trim()) {
+      setCustom((c) => ({ ...c, nodes: c.nodes.map((x) => (x.id === n.id ? { ...x, label: label.trim().slice(0, 6) } : x)) }));
+    }
   };
 
   const onMove = (e) => {
@@ -121,6 +198,7 @@ export default function GraphPlayground() {
     const p = toSvg(e);
     const nx = Math.max(50, Math.min(710, p.x - d.dx));
     const ny = Math.max(50, Math.min(370, p.y - d.dy));
+    d.moved = true;
     setPos((prev) => ({ ...prev, [topoId]: { ...prev[topoId], [d.id]: { x: nx, y: ny } } }));
   };
 
@@ -128,9 +206,16 @@ export default function GraphPlayground() {
     dragRef.current = null;
   };
 
+  const addNode = () => {
+    const id = 'n' + Date.now().toString(36);
+    setCustom((c) => ({ ...c, nodes: [...c.nodes, { id, label: `agent-${c.nodes.length + 1}`, tone: 'acc' }] }));
+    setPos((prev) => ({ ...prev, custom: { ...prev.custom, [id]: { x: 380, y: 210 } } }));
+  };
+
   const animatePacket = async (from, to, dur = 750) => {
     const a = P[from];
     const b = P[to];
+    if (!a || !b) return;
     setPacket({ x: a.x, y: a.y, dur: 0 });
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     setPacket({ x: b.x, y: b.y, dur });
@@ -175,6 +260,8 @@ export default function GraphPlayground() {
     setActive(null);
     setPacket(null);
     setHotEdge(null);
+    setEditMode(null);
+    setPending(null);
   };
 
   const nodeById = (id) => topo.nodes.find((n) => n.id === id);
@@ -183,8 +270,8 @@ export default function GraphPlayground() {
     <div className="grid lg:grid-cols-[1fr_250px] gap-3">
       <div className="panel overflow-hidden">
         <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 border-b border-[var(--color-line)]">
-          <div className="flex gap-1.5">
-            {Object.entries(TOPOS).map(([id, t]) => (
+          <div className="flex gap-1.5 flex-wrap">
+            {Object.entries(BASE_TOPOS).map(([id, t]) => (
               <button
                 key={id}
                 onClick={() => switchTopo(id)}
@@ -193,11 +280,39 @@ export default function GraphPlayground() {
                 {t.name}
               </button>
             ))}
+            <button
+              onClick={() => switchTopo('custom')}
+              className={`chip font-monox cursor-pointer transition-colors ${isCustom ? 'border-[var(--color-teal)] text-[var(--color-teal)] bg-[rgba(45,212,191,0.1)]' : 'hover:text-[var(--color-ink)]'}`}
+            >
+              自定义
+            </button>
           </div>
-          <button className="btn ml-auto !py-1.5" onClick={run} disabled={running}>
+          <button className="btn ml-auto !py-1.5" onClick={run} disabled={running || (isCustom && topo.script.length === 0)}>
             {running ? '运行中…' : '运行'}
           </button>
         </div>
+
+        {isCustom && (
+          <div className="flex flex-wrap items-center gap-2 px-4 py-2 border-b border-[var(--color-line)] bg-[rgba(45,212,191,0.03)]">
+            <button className="chip cursor-pointer hover:text-[var(--color-ink)] transition-colors" onClick={addNode}>＋ 节点</button>
+            <button
+              className={`chip cursor-pointer transition-colors ${editMode === 'edge' ? 'border-[var(--color-acc)] text-[var(--color-ink)] bg-[rgba(109,141,255,0.15)]' : 'hover:text-[var(--color-ink)]'}`}
+              onClick={() => {
+                setEditMode(editMode === 'edge' ? null : 'edge');
+                setPending(null);
+              }}
+            >
+              {editMode === 'edge' ? (pending ? `连边中：已选 ${nodeById(pending)?.label}，点目标节点` : '连边中：点起点节点') : '连边'}
+            </button>
+            <button
+              className={`chip cursor-pointer transition-colors ${editMode === 'delete' ? 'border-[var(--color-rose)] text-[var(--color-rose)] bg-[rgba(251,113,133,0.1)]' : 'hover:text-[var(--color-ink)]'}`}
+              onClick={() => setEditMode(editMode === 'delete' ? null : 'delete')}
+            >
+              {editMode === 'delete' ? '删除中：点节点' : '删点'}
+            </button>
+            <span className="text-[11px] text-[var(--color-faint)] ml-auto">改动自动保存在浏览器</span>
+          </div>
+        )}
 
         <svg
           ref={svgRef}
@@ -209,9 +324,10 @@ export default function GraphPlayground() {
           onPointerUp={onUp}
           onPointerLeave={onUp}
         >
-          {topo.edges.map(([a, b]) => {
+          {topo.edges.map(([a, b], ei) => {
             const pa = P[a];
             const pb = P[b];
+            if (!pa || !pb) return null;
             const hot = hotEdge && hotEdge[0] === a && hotEdge[1] === b;
             const hasReverse = topo.edges.some(([x, y]) => x === b && y === a);
             const stroke = hot ? 'var(--color-acc)' : 'var(--color-line-strong)';
@@ -227,7 +343,7 @@ export default function GraphPlayground() {
               const cy = my + (dx / len) * 26;
               return (
                 <path
-                  key={`${a}-${b}`}
+                  key={`${a}-${b}-${ei}`}
                   d={`M ${pa.x} ${pa.y} Q ${cx} ${cy} ${pb.x} ${pb.y}`}
                   fill="none"
                   stroke={stroke}
@@ -239,7 +355,7 @@ export default function GraphPlayground() {
             }
             return (
               <line
-                key={`${a}-${b}`}
+                key={`${a}-${b}-${ei}`}
                 x1={pa.x}
                 y1={pa.y}
                 x2={pb.x}
@@ -261,21 +377,24 @@ export default function GraphPlayground() {
 
           {topo.nodes.map((n) => {
             const p = P[n.id];
-            const tone = TONE[n.tone];
+            if (!p) return null;
+            const tone = TONE[n.tone] || TONE.acc;
             const isActive = active === n.id;
+            const isPending = pending === n.id;
             return (
               <g
                 key={n.id}
                 transform={`translate(${p.x}, ${p.y})`}
                 onPointerDown={onNodeDown(n.id)}
-                style={{ cursor: running ? 'default' : 'grab' }}
+                onDoubleClick={() => onNodeDoubleClick(n)}
+                style={{ cursor: running ? 'default' : editMode ? 'pointer' : 'grab' }}
               >
-                {isActive && <circle r="34" fill="none" stroke={tone.stroke} strokeWidth="1" opacity="0.5" className="pulse-dot" />}
+                {(isActive || isPending) && <circle r="34" fill="none" stroke={isPending ? 'var(--color-teal)' : tone.stroke} strokeWidth="1" opacity="0.5" className="pulse-dot" />}
                 <circle
                   r="26"
                   fill={tone.fill}
-                  stroke={tone.stroke}
-                  strokeWidth={isActive ? 2.2 : 1.2}
+                  stroke={isPending ? 'var(--color-teal)' : tone.stroke}
+                  strokeWidth={isActive || isPending ? 2.2 : 1.2}
                   style={{ transition: 'stroke-width 0.25s' }}
                 />
                 <text textAnchor="middle" dominantBaseline="central" fontSize="15" fill={tone.text} style={{ pointerEvents: 'none' }}>
@@ -289,8 +408,21 @@ export default function GraphPlayground() {
           })}
         </svg>
 
+        {isCustom && (
+          <div className="px-4 py-3 border-t border-[var(--color-line)]">
+            <div className="text-[11px] font-monox text-[var(--color-faint)] mb-1.5">消息剧本（每行：起点id,终点id,消息）</div>
+            <textarea
+              value={custom.script}
+              onChange={(e) => setCustom((c) => ({ ...c, script: e.target.value }))}
+              rows={4}
+              spellCheck={false}
+              className="w-full bg-[var(--color-panel2)] border border-[var(--color-line)] rounded-lg px-3 py-2 font-monox text-[11.5px] text-[var(--color-ink)] outline-none resize-y"
+            />
+          </div>
+        )}
+
         <div className="px-4 py-2.5 border-t border-[var(--color-line)] text-[11.5px] text-[var(--color-faint)]">
-          节点可拖拽 · {topo.desc}
+          {isCustom ? topo.desc : `节点可拖拽 · ${topo.desc}`}
         </div>
       </div>
 
@@ -303,13 +435,13 @@ export default function GraphPlayground() {
         <div ref={logRef} className="flex-1 overflow-y-auto space-y-2 max-h-[340px] pr-1">
           {log.length === 0 && (
             <p className="text-[12px] text-[var(--color-faint)] leading-relaxed">
-              点「运行」，看消息沿着拓扑的边流动。不同拓扑 = 不同的协作协议。
+              点「运行」，看消息沿着拓扑的边流动。不同拓扑 = 不同的协作协议。切到「自定义」可以亲手造一个。
             </p>
           )}
           {log.map((l, i) => (
             <div key={i} className="fade-up rounded-lg border border-[var(--color-line)] bg-[var(--color-panel2)] px-2.5 py-2">
               <div className="font-monox text-[11px] text-[var(--color-acc)] mb-0.5">
-                {l.self ? `${l.f} · 内部收敛` : `${nodeById(l.f)?.label || l.f} → ${nodeById(l.t)?.label || l.t}`}
+                {l.self ? `${nodeById(l.f)?.label || l.f} · 内部收敛` : `${nodeById(l.f)?.label || l.f} → ${nodeById(l.t)?.label || l.t}`}
               </div>
               <div className="text-[11.5px] text-[var(--color-mute)] leading-relaxed">{l.msg}</div>
             </div>

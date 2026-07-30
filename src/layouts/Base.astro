@@ -20,6 +20,7 @@ const chapters = [
   { slug: 'loop', label: 'Loop' },
   { slug: 'graph', label: 'Graph' },
   { slug: 'notes', label: '文章' },
+  { slug: 'cases', label: '案例' },
 ];
 ---
 
@@ -33,6 +34,13 @@ const chapters = [
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="细林 · Agentic Lab" />
+    <meta property="og:image" content="https://chenxilin1994.github.io/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content="https://chenxilin1994.github.io/og.png" />
+    <link rel="alternate" type="application/rss+xml" title="细林 · Agentic Lab" href="/rss.xml" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <ClientRouter />
   </head>

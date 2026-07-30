@@ -1,0 +1,69 @@
+---
+import Base from '../layouts/Base.astro';
+
+const CASES = [
+  {
+    title: 'Agentic Lab · 本站',
+    status: '已上线',
+    statusTone: 'teal',
+    tags: ['harness', 'loop', 'graph', 'WebLLM'],
+    desc: '这个网站本身就是最完整的案例：由 AI agent 协作完成选题、架构、四个交互 demo、文章调研与前端互审。BYOK 模式的浏览器 harness、三模式 loop 模拟器、可编辑拓扑图，全部零后端。',
+    points: ['浏览器内 tool_use 循环 + 真实 token 计量', 'WebLLM function calling 本地 loop', 'subagent 评审 → 12 项修复全由 agent 完成'],
+    link: '/meta/',
+    linkText: '看构建日志',
+  },
+  {
+    title: '虚位以待 · 你的下一个项目',
+    status: '待补充',
+    statusTone: 'faint',
+    tags: ['待定义'],
+    desc: '案例区的意义是放「真实做过的工程」：问题背景、架构选择、踩坑与数据。建议格式——一句话问题、三张架构/流程要点、一组结果数据、一个可访问的 demo 或仓库链接。',
+    points: ['问题与约束是什么', 'harness/loop/graph 哪层是关键', '结果如何衡量'],
+    link: 'https://github.com/chenxilin1994',
+    linkText: '去 GitHub 挑一个',
+  },
+];
+---
+
+<Base title="实战案例 · Agentic Lab" current="cases">
+  <section class="max-w-3xl mx-auto px-5 pt-16 pb-10">
+    <div class="chip font-monox mb-4">CASES · 实战</div>
+    <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--color-ink)]">实战案例</h1>
+    <p class="mt-4 text-[15px] leading-relaxed text-[var(--color-mute)]">
+      认知靠 demo 证明，工程靠案例证明。这里放用 agentic 技术真实做过的东西——
+      案例区刚开张，先把本站自己摆上货架。
+    </p>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-5 pb-16 space-y-3">
+    {
+      CASES.map((c) => (
+        <div class="panel p-6">
+          <div class="flex flex-wrap items-center gap-2.5 mb-3">
+            <h2 class="text-[17px] font-semibold text-[var(--color-ink)]">{c.title}</h2>
+            <span
+              class="font-monox text-[10.5px] px-2 py-0.5 rounded border"
+              style={c.statusTone === 'teal' ? 'color: var(--color-teal); border-color: rgba(45,212,191,0.4)' : 'color: var(--color-faint); border-color: var(--color-line)'}
+            >
+              {c.status}
+            </span>
+            <span class="ml-auto flex gap-1.5">
+              {c.tags.map((t) => (
+                <span class="chip font-monox text-[10.5px]">{t}</span>
+              ))}
+            </span>
+          </div>
+          <p class="text-[13.5px] text-[var(--color-mute)] leading-relaxed mb-3">{c.desc}</p>
+          <ul class="text-[12.5px] text-[var(--color-faint)] leading-relaxed space-y-1 mb-4">
+            {c.points.map((p) => (
+              <li>· {p}</li>
+            ))}
+          </ul>
+          <a href={c.link} class="font-monox text-[12px] text-[var(--color-acc)] no-underline hover:underline" target={c.link.startsWith('http') ? '_blank' : undefined} rel="noreferrer">
+            {c.linkText} →
+          </a>
+        </div>
+      ))
+    }
+  </section>
+</Base>
