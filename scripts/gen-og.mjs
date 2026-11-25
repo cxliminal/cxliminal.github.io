@@ -34,7 +34,7 @@ const svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http
   <text x="80" y="360" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-weight="600" font-size="64" fill="#e8e8f2">到<tspan fill="#6d8dff">让模型自己干活</tspan></text>
   <text x="80" y="425" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" font-size="24" fill="#9b9bb4">vibecoding 之后的互动实验室 · 每篇认知都有一个能上手玩的 demo</text>
   ${chapters}
-  <text x="80" y="565" font-family="Consolas, monospace" font-size="20" fill="#7c7c96">chenxilin1994.github.io</text>
+  <text x="80" y="565" font-family="Consolas, monospace" font-size="20" fill="#7c7c96">cxliminal.github.io</text>
   <text x="1120" y="565" text-anchor="end" font-family="Consolas, monospace" font-size="20" fill="#7c7c96">built by AI agents × 细林</text>
 </svg>`;
 

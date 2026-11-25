@@ -23,13 +23,17 @@
 ## 开发
 
 ```bash
-npm install
+npm ci
 npm run dev      # http://localhost:4321
 npm run build    # 输出 dist/
 npm run preview
 ```
 
+## 发布
+
+[线上站点](https://cxliminal.github.io/) 由 GitHub Actions 发布。仓库 **Settings → Pages → Source** 应选 **GitHub Actions**，不要选择从分支根目录发布。推送到 `master` 后，工作流会执行 `npm ci` 和 `npm run build`，只发布 `dist/`。变更依赖时请同时提交锁文件。
+
 ## 元信息
 
-本站由 AI agent 协作构建，全部决策与过程公开在 [/meta](https://chenxilin1994.github.io/meta/) 构建日志。
+本站由 AI agent 协作构建，全部决策与过程公开在 [/meta](https://cxliminal.github.io/meta/) 构建日志。
 前身「智学笔记」（191 篇 VitePress 笔记）封存在 git 历史中。

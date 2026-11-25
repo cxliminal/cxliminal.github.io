@@ -14,6 +14,8 @@ const {
   current = '',
 } = Astro.props;
 
+const shareImage = new URL('/og.png', Astro.site).href;
+
 const chapters = [
   { slug: 'model', label: '大模型' },
   { slug: 'harness', label: 'Harness' },
@@ -35,11 +37,11 @@ const chapters = [
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="细林 · Agentic Lab" />
-    <meta property="og:image" content="https://chenxilin1994.github.io/og.png" />
+    <meta property="og:image" content={shareImage} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content="https://chenxilin1994.github.io/og.png" />
+    <meta name="twitter:image" content={shareImage} />
     <link rel="alternate" type="application/rss+xml" title="细林 · Agentic Lab" href="/rss.xml" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <ClientRouter />
@@ -90,7 +92,7 @@ const chapters = [
         </div>
 
         <a
-          href="https://github.com/chenxilin1994/chenxilin1994.github.io"
+          href="https://github.com/cxliminal/cxliminal.github.io"
           target="_blank"
           rel="noopener"
           class="ml-auto text-[var(--color-faint)] hover:text-[var(--color-ink)] transition-colors shrink-0"
